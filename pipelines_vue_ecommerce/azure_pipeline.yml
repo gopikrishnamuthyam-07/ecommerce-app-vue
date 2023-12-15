@@ -1,0 +1,40 @@
+trigger:
+  batch: true
+  branches:
+    include:
+      - feature/EcommerceApp-Gopikrishna
+  paths:
+    include:
+      - /E-COMMERCE-APP/vue-ecommerce-app
+
+pool:
+  name: "Azure Pipelines"
+
+stages:
+  - template: templates/stage_level_templates/test_build_stage_template.yml # stage template to test, build and push
+    parameters:
+      projectFolder: E-COMMERCE-APP/vue-ecommerce-app
+      buildOutputFolder: E-COMMERCE-APP/vue-ecommerce-app/dist
+      sourceFolder: E-COMMERCE-APP/vue-ecommerce-app
+      vmImageName: $(VMIMAGE)
+
+  - template: templates/stage_level_templates/az_deployment_stage_template.yml # stage template for azure resource deployment to Develop
+    parameters:
+      vmImageName: $(VMIMAGE) #${{variables.vmImage}}
+      azureSubscription: "Interns"
+      resourceGroup: "ariqt-ecommerce"
+      bicepFilePath: "E-COMMERCE-APP/Infrastructure_vue_ecommerce/main.bicep" 
+      parameterFilePath: "E-COMMERCE-APP/Infrastructure_vue_ecommerce/main.parameters.dev.json"
+      jobName: "resourcedeployment"
+      jobDescription: "deployemnt of resources"
+      scriptType: "bash"
+      environment: "dev"
+      deploy: true
+
+  - template: templates/stage_level_templates/app_deployment_stage_template.yml #stage template for application deployment
+    parameters:
+      serviceConnection: "Interns"
+      subscriptionId: "10721c89-8a26-4102-920b-51b186d2f674"
+      environment: "dev"
+      appType: "webApp"
+      appName: "ariqt-ecommerce-app"
